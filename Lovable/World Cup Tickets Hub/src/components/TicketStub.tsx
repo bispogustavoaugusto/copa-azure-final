@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { QRCodeCanvas } from 'qrcode.react';
+import QRCode from 'qrcode';
 import { Trophy, MapPin, Calendar, Clock, User, ShieldCheck } from 'lucide-react';
 
 export interface TicketData {
@@ -62,6 +62,19 @@ export const TicketStub: React.FC<TicketStubProps> = ({
   const qrUrl = buildVerifyUrl(ticket, siteOrigin);
   const formattedDate = format(new Date(ticket.date), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const purchaseDateFormatted = format(ticket.purchaseDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+
+  // Gera o QR como PNG data URL e renderiza como <img>.
+  // html2canvas captura <img> perfeitamente; canvases filhos têm
+  // problemas conhecidos quando o pai está tainted pelas bandeiras CDN.
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  useEffect(() => {
+    QRCode.toDataURL(qrUrl, {
+      width: 280,
+      margin: 0,
+      errorCorrectionLevel: 'M',
+      color: { dark: FIFA_RED, light: '#FFFFFF' },
+    }).then(setQrDataUrl).catch(() => setQrDataUrl(''));
+  }, [qrUrl]);
 
   return (
     <div
@@ -376,15 +389,20 @@ export const TicketStub: React.FC<TicketStubProps> = ({
               border: `2px solid ${FIFA_RED}`,
               borderRadius: 6,
               display: 'inline-block',
+              lineHeight: 0,
             }}
           >
-            <QRCodeCanvas
-              value={qrUrl}
-              size={140}
-              level="M"
-              fgColor={FIFA_RED}
-              bgColor="white"
-            />
+            {qrDataUrl ? (
+              <img
+                src={qrDataUrl}
+                alt="QR Code"
+                width={140}
+                height={140}
+                style={{ display: 'block', width: 140, height: 140 }}
+              />
+            ) : (
+              <div style={{ width: 140, height: 140, background: '#f4f4f4' }} />
+            )}
           </div>
         </div>
 
