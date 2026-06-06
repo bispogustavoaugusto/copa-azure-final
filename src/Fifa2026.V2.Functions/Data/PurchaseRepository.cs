@@ -32,6 +32,23 @@ public sealed class PurchaseRepository : IPurchaseRepository
 
     public async Task<InsertOutcome> InsertPurchaseAsync(PurchaseMessage message, CancellationToken cancellationToken = default)
     {
+        // M-1 (gate S2.5): o contrato v2 usa códigos curtos (VIP/Cat1/Cat2), mas a
+        // coluna ticket_categories.category guarda os rótulos reais do seed
+        // ('VIP Premium'/'Categoria 1'/'Categoria 2' — ver
+        // fifa2026-api/database/migrations/2026-05-08-real-fifa-prices.sql). Mapeamos
+        // o código para o rótulo ANTES do JOIN; o contrato externo permanece curto.
+        var dbCategory = CategoryLabelMapper.ToDbLabel(message.Category);
+        if (dbCategory is null)
+        {
+            // Código de categoria desconhecido → falha permanente (mesmo tratamento
+            // de categoria inexistente): o consumer encaminha ao DLQ. Não altera o
+            // contrato — apenas reconhece que o código não mapeia para o seed.
+            _logger.LogWarning(
+                "Código de categoria desconhecido '{Category}' (correlationId={CorrelationId}). Esperado VIP/Cat1/Cat2.",
+                message.Category, message.CorrelationId);
+            return InsertOutcome.CategoryNotFound;
+        }
+
         // INSERT atômico que resolve ticket_category_id, unit_price e total_price
         // a partir de ticket_categories (JOIN por match_id + category). Se o par
         // (matchId, category) não existir, o SELECT interno não retorna linha e o
@@ -72,7 +89,7 @@ public sealed class PurchaseRepository : IPurchaseRepository
                     message.Quantity,
                     message.CorrelationId,
                     message.MatchId,
-                    message.Category,
+                    Category = dbCategory,
                     message.EntraOid
                 },
                 cancellationToken: cancellationToken);

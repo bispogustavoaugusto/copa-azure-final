@@ -34,20 +34,25 @@ public sealed class FifaQueryRepository : IFifaQueryRepository
     {
         // Resolve a partida (matchId tem prioridade; senão tenta casar por nome dos
         // times via matchDescription "Mandante x Visitante"). Agrega as categorias
-        // (VIP/Cat1/Cat2) numa única linha com PIVOT condicional. Schema real:
+        // numa única linha com PIVOT condicional. Schema real:
         //   matches (id, home_team_id, away_team_id) JOIN teams (name)
         //   ticket_categories (match_id, category, price, available_quantity).
-        // Categorias casadas case-insensitive contra os rótulos do projeto
-        // (VIP / Cat1 / Cat2 — ver PurchaseV2Request no frontend e seed real).
+        //
+        // M-1 (gate S2.5): o PIVOT filtra pelos rótulos REAIS do seed
+        // ('VIP Premium'/'Categoria 1'/'Categoria 2' — ver
+        // fifa2026-api/database/migrations/2026-05-08-real-fifa-prices.sql), NÃO pelos
+        // códigos curtos do contrato (VIP/Cat1/Cat2). Os rótulos são passados como
+        // parâmetros (CategoryLabelMapper, fonte única) — mantém a query parametrizada
+        // (anti SQL injection) e o contrato externo inalterado.
         const string sql = """
             SELECT TOP (1)
                 (ht.name + ' x ' + at.name) AS Partida,
-                SUM(CASE WHEN tc.category = 'VIP'  THEN tc.available_quantity ELSE 0 END) AS VipDisponivel,
-                SUM(CASE WHEN tc.category = 'Cat1' THEN tc.available_quantity ELSE 0 END) AS Cat1Disponivel,
-                SUM(CASE WHEN tc.category = 'Cat2' THEN tc.available_quantity ELSE 0 END) AS Cat2Disponivel,
-                MAX(CASE WHEN tc.category = 'VIP'  THEN tc.price END) AS PrecoVip,
-                MAX(CASE WHEN tc.category = 'Cat1' THEN tc.price END) AS PrecoCat1,
-                MAX(CASE WHEN tc.category = 'Cat2' THEN tc.price END) AS PrecoCat2
+                SUM(CASE WHEN tc.category = @VipLabel  THEN tc.available_quantity ELSE 0 END) AS VipDisponivel,
+                SUM(CASE WHEN tc.category = @Cat1Label THEN tc.available_quantity ELSE 0 END) AS Cat1Disponivel,
+                SUM(CASE WHEN tc.category = @Cat2Label THEN tc.available_quantity ELSE 0 END) AS Cat2Disponivel,
+                MAX(CASE WHEN tc.category = @VipLabel  THEN tc.price END) AS PrecoVip,
+                MAX(CASE WHEN tc.category = @Cat1Label THEN tc.price END) AS PrecoCat1,
+                MAX(CASE WHEN tc.category = @Cat2Label THEN tc.price END) AS PrecoCat2
             FROM dbo.matches m
             INNER JOIN dbo.teams ht ON ht.id = m.home_team_id
             INNER JOIN dbo.teams at ON at.id = m.away_team_id
@@ -68,7 +73,14 @@ public sealed class FifaQueryRepository : IFifaQueryRepository
         await using var connection = new SqlConnection(_connectionString);
         var command = new CommandDefinition(
             sql,
-            new { MatchId = matchId, MatchDescription = matchDescription },
+            new
+            {
+                MatchId = matchId,
+                MatchDescription = matchDescription,
+                VipLabel = CategoryLabelMapper.VipPremium,
+                Cat1Label = CategoryLabelMapper.Categoria1,
+                Cat2Label = CategoryLabelMapper.Categoria2
+            },
             cancellationToken: cancellationToken);
 
         var row = await connection.QuerySingleOrDefaultAsync<AvailabilityRow>(command);

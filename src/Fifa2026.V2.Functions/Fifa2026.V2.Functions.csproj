@@ -29,6 +29,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Permite ao projeto de testes exercitar membros internal (mapping de
+         código curto de categoria → rótulo do seed, M-1) sem expô-los publicamente. -->
+    <InternalsVisibleTo Include="Fifa2026.V2.Functions.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
