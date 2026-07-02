@@ -154,18 +154,21 @@ Peça ao chatbot uma **ação**:
   - **Fail-visível** — sem o papel, o `LogsQueryClient` toma **403** e os nós **não acendem**.
 - **▸ Nesta etapa:** ligar a MID do `ca-flow` e conceder `Log Analytics Reader` no workspace.
 
+> 🔐 **Blindar — a MESMA identidade abre o cofre:** essa Managed Identity (com a role `Key Vault Secrets User`) também **lê os segredos do Key Vault** — as chaves (SQL, Gemini, SignalR, o segredo do gateway) **saem do claro** e vão para o cofre já existente, in-place, sem downtime. Uma identidade sem-senha para **telemetria E segredos**.
+
 ---
 
-## Key Vault: os segredos saem do claro (missão Blindar)
+## CONCEITO-CHAVE · Identidade unificada: modernizar sem destruir
 
-- **Antes:** as chaves (SQL, Gemini, SignalR e o **segredo do gateway**) viviam **em claro** nas App Settings / secrets do Container App.
-- **Agora (entregue):** cada chave vira um secret no **Key Vault que já existe** (nada recriado), lido por uma **Managed Identity** — uma **User-Assigned compartilhada, só-leitura** do cofre (role `Key Vault Secrets User`). Migração **in-place, sem downtime**.
+- O usuário que já existia no **v1** (senha **bcrypt**) ganha um **`entra_oid` do CIAM** vinculado **na mesma linha `users`** — **vínculo, não substituição**. O bcrypt **não migra** (a Microsoft gerencia a credencial do CIAM); os dois **coexistem**.
+- O **JIT `/api/v2/me`** faz **resolve-or-provision**: **eager** (a migração em lote das Quartas) + **lazy** (link por **email** no 1º login/compra de quem chega **nato-CIAM**).
+- O fence **`CiamOnly`** blinda o endpoint: um token **admin/workforce nunca** provisiona um cliente.
 
-> **Ganho estrutural:** o `X-Gateway-Key` que o gateway **injeta** e o que os serviços **validam** viram **o mesmo secret** no cofre → a igualdade é **estrutural**, não dá mais para divergir e derrubar tudo.
+> **Insight de negócio:** o usuário **nato-CIAM** antes **não conseguia comprar** (o checkout exigia um `users.id` do v1). A unificação o torna **cidadão de primeira classe** na base.
 
-# "A mesma Managed Identity que lê a telemetria<br/>é a que **apaga o segredo em claro**."
+# "O login novo não apaga o usuário antigo —<br/>ele o **adota**."
 
-<small>Reuso total (ADE-010). SQL **sem senha** via MI é o próximo nível (showcase/Fase 2 — backend v1 segue com senha por retro-compat); a KV reference das chaves é entregue agora.</small>
+<small>É o gêmeo, na Final, do "modernizar sem destruir" das Quartas. **ADITIVO** — bcrypt + `entra_oid` na mesma linha, nada é apagado (contraste com o slide do n8n, que é **subtrativo**). Story 3.5 / ADE-007.</small>
 
 ---
 
@@ -224,6 +227,8 @@ Peça ao chatbot uma **ação**:
 
 > Trade-off consciente: a notificação fica **invisível** na animação (dobrada no nó 3). Ganhamos simplicidade; a observabilidade vive no **log correlacionado**.
 
+> **Duas faces de "evoluir sem quebrar":** a **identidade** (slide anterior) é **ADITIVA** — *adiciona* o vínculo CIAM, nada é apagado; a **re-arquitetura** aqui é **SUBTRATIVA** — *remove* uma peça inteira e a função continua inline. Modernizar destrua o mínimo: às vezes some, às vezes soma.
+
 <small>Remover um componente em vez de trocá-lo é uma decisão de arquitetura — e a lição de encerramento do Living Lab.</small>
 
 ---
@@ -241,14 +246,15 @@ Diagrama: [`final-f5-f6-mcp-flow.drawio`](../../diagrams/final-f5-f6-mcp-flow.dr
 
 ---
 
-## As 4 missões da Final (retrospectiva)
+## As 5 missões da Final (retrospectiva)
 
 | Missão | O que você provou |
 |---|---|
 | **Voz** (F5) | uma IA consulta dados reais **com segurança** — 7 sentidos, zero escrita |
 | **Visão** (F6) | observabilidade distribuída: uma compra animada em **5 nós** por `correlationId` |
 | **Blindar** (hardening) | gateway guardião único (`X-Gateway-Key` fecha o bypass); **segredos no Key Vault** (via Managed Identity), não em claro; chave Gemini nunca no bundle |
-| **Simplificar** (re-arquitetura) | **menos peças** (notificação inline), mesma função — retro-compat |
+| **Unificar** (identidade) | base v1 (bcrypt) ↔ CIAM na mesma linha `users`; JIT `/api/v2/me` torna o cliente nato-CIAM **cidadão de primeira classe** — **aditivo** |
+| **Simplificar** (re-arquitetura) | **menos peças** (notificação inline), mesma função — retro-compat — **subtrativo** |
 
 ---
 

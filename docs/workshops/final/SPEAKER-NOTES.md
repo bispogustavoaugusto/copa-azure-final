@@ -6,7 +6,7 @@
 
 **Como estas notas se organizam (LEIA ISTO):** cada seção abaixo corresponde a **um slide do deck** (`slides.md`), na **mesma ordem em que você clica**. O cabeçalho de cada seção repete o título do slide e indica o número do slide equivalente no storyboard/`.pptx` (`≈ Storyboard SN`). Onde o slide dispara um **momento hands-on**, há um bloco **▶ PAUSA O DECK → GUIA** que te leva ao `final-portal-guide.md` e te diz quando **voltar** ao deck. Assim o que você fala bate exatamente com o que está projetado.
 
-> **Premissa de fidelidade (Art. IV — No Invention):** todo número, nome de tool, nó e arquivo aqui bate com o deck, o guia e o código real. Se a turma perguntar "onde isso está no código?", aponte: `FifaTicketTools.cs` (as 7 tools), `gemini.ts` (chatbot), `FlowEventType.cs` / `flowNodes.ts` (os 5 nós). **A Final é:** sem orquestração externa (n8n **removido**), **7 tools read-only**, **`gemini-2.5-flash`**, **5 nós**, notificação pós-compra **inline** na Function Consumer, chave Gemini **só no proxy server-side**, `X-Gateway-Key` fechando o bypass ao McpServer. Não invente APIs, tools nem nós.
+> **Premissa de fidelidade (Art. IV — No Invention):** todo número, nome de tool, nó e arquivo aqui bate com o deck, o guia e o código real. Se a turma perguntar "onde isso está no código?", aponte: `FifaTicketTools.cs` (as 7 tools), `gemini.ts` (chatbot), `FlowEventType.cs` / `flowNodes.ts` (os 5 nós). **A Final é:** sem orquestração externa (n8n **removido**), **7 tools read-only**, **`gemini-2.5-flash`**, **5 nós**, notificação pós-compra **inline** na Function Consumer, chave Gemini **só no proxy server-side**, `X-Gateway-Key` fechando o bypass ao McpServer. **Identidade (Story 3.5 / ADE-007):** `bcrypt` + `entra_oid` na **mesma linha `users`** (vínculo, não substituição), JIT **`GET /api/v2/me`** (resolve-or-provision), fence **`CiamOnly`** (admin nunca provisiona cliente). Não invente APIs, rotas, claims, tools nem nós.
 
 ---
 
@@ -19,12 +19,12 @@
 | **▶ F5 hands-on** | *(deck pausado)* → guia **Fases 1–4** | Subir o McpServer + chatbot Gemini | 2h00–2h50 | ~3:40 |
 | **F5 clímax** | slide 11 (regra de ouro AO VIVO) → guia **Fase 5** | A demo "cria um alerta pra mim" — segurança por construção | 20 min | ~4:00 |
 | **Intervalo** | — | — | 15 min | ~4:15 |
-| **F6 conceitos** | 12–16 (divisor F6, MID, Key Vault, observabilidade, 5 nós) | Managed Identity + Key Vault (entrega Blindar) + observabilidade/SignalR | 25 min | ~4:40 |
+| **F6 conceitos** | 12–16 (divisor F6, MID + cofre KV, identidade unificada, observabilidade, 5 nós) | Managed Identity (+ Key Vault, entrega Blindar) · identidade unificada v1↔CIAM · observabilidade/SignalR | 25 min | ~4:40 |
 | **▶ F6 hands-on** | *(deck pausado)* → guia **Fases 6–8** | Criar SignalR/MID + FlowEvents + rota `/flow` | 1h30–2h30 | ~6:30 |
 | **F6 clímax** | slides 16–18 (5 nós, onde foi o n8n, simplificar) → guia **Fase 9** | O smoke: a bolinha atravessa 5 nós ao vivo | 30 min | ~7:00 |
-| **Fechamento** | 19–22 (arquitetura, 4 missões, encerramento, obrigado) → guia entrega | Fork + retrospectiva das 4 missões + celebração | 25 min | ~7:25 |
+| **Fechamento** | 19–22 (arquitetura, 5 missões, encerramento, obrigado) → guia entrega | Fork + retrospectiva das 5 missões + celebração | 25 min | ~7:25 |
 
-> **Mindset do facilitador:** o deck é **enxuto de propósito** — só as **quatro tecnologias novas** (MCP · RAG · Managed Identity/Key Vault · observabilidade SignalR). Ele **não reexplica** compra async, gateway ou identidade (Oitavas/Quartas). O ouro didático da Final está em **dois momentos ao vivo**: a **regra de ouro** (slide 11, Fase 5 do guia) e o **smoke dos 5 nós** (slides 16–18, Fase 9 do guia). Entregue os dois com a turma ainda com energia.
+> **Mindset do facilitador:** o deck é **enxuto de propósito** — as **quatro tecnologias novas** (MCP · RAG · Managed Identity/Key Vault · observabilidade SignalR) + os **conceitos-chave** (regra de ouro, **identidade unificada**, "onde foi o n8n"). Ele **não reexplica** compra async, gateway ou a identidade das Quartas — o slide de identidade só **ACRESCENTA** a unificação nova (base v1 ↔ CIAM, Story 3.5). O ouro didático da Final está em **dois momentos ao vivo**: a **regra de ouro** (slide 11, Fase 5 do guia) e o **smoke dos 5 nós** (slides 16–18, Fase 9 do guia). Entregue os dois com a turma ainda com energia.
 >
 > **A restrição dura (repita no slide 2):** a Final **ADICIONA**. Nada das Oitavas/Quartas deixa de funcionar. A compra é a mesma; a Final só acrescenta **voz** (chatbot que lê) e **visão** (visualizador que mostra).
 >
@@ -103,6 +103,13 @@
 
 **Pergunta para a turma:** "Se o McpServer é interno e o browser nunca o alcança, **quem** injeta a identidade do usuário nele?" → o **gateway**, via header `X-Entra-OID`. (Reforço: "E se alguém der `curl` direto forjando esse header? **401** — falta o `X-Gateway-Key`, que só o gateway tem.")
 
+**Aprofundamento teórico (para EXPLICAR o MCP, não só apontar):**
+> "Antes do MCP, dar 'ferramentas' a um LLM era colar a descrição das funções **no prompt**, na mão, e cada aplicação inventava o seu próprio jeito. O MCP transforma isso num **protocolo aberto e padronizado** — daí a analogia do **USB-C**: antes cada aparelho tinha o seu conector; hoje um plugue só serve pra tudo. O MCP faz o mesmo para 'LLM ↔ ferramentas/dados': **um contrato único** que qualquer cliente e qualquer servidor falam.
+>
+> O coração são **dois verbos**. O `tools/list` é a **descoberta**: o cliente pergunta ao servidor 'quais ferramentas você tem?' e recebe um **catálogo tipado** — nome, descrição e o **schema dos argumentos** de cada uma. E isso é **em runtime**: o modelo não precisa saber de antemão o que existe; ele **descobre**. O `tools/call` é a **invocação**: chamar uma ferramenta pelo nome, com argumentos que batem com o schema. Os dois trafegam em **JSON-RPC 2.0** — um formato simples de 'chamada de procedimento remoto': um objeto com `method`, `params` e um `id` que casa a pergunta com a resposta.
+>
+> Por que um **padrão** importa, e não só 'colar as tools no prompt'? Três ganhos concretos: (1) **descoberta dinâmica** — uma 8ª ferramenta adicionada no servidor aparece sozinha no `tools/list`, sem tocar no cliente; (2) **contrato tipado** — o modelo conhece os argumentos exatos, então erra menos; (3) **desacoplamento** — o McpServer pode evoluir (trocar o banco, otimizar a query) sem o chatbot saber. Aqui é literal: o McpServer é um **serviço .NET** (SDK oficial `ModelContextProtocol`), com **ingress interno**, atrás do gateway — o browser **nunca** fala com ele; quem chama `tools/list`/`tools/call` é o servidor, do lado seguro."
+
 **Gancho → próximo slide:** "Quais são, exatamente, essas sete ferramentas? Todas de leitura — vamos ver a lista."
 
 ## Slide 7 — "As 7 ferramentas (todas de leitura)" · ≈ Storyboard S4 (companheiro) [~4 min]
@@ -129,6 +136,13 @@
 
 **Se perguntarem do modelo:** o runtime usa **`gemini-2.5-flash`**. O comentário de cabeçalho do `gemini.ts` ainda cita `2.0-flash` — **inconsistência conhecida e inofensiva**, fora de escopo corrigir.
 
+**Aprofundamento teórico (o que RAG É de verdade):**
+> "Para explicar RAG, comece pelo **problema**. Um LLM guarda **conhecimento paramétrico** — tudo o que ele 'decorou' nos bilhões de parâmetros durante o treino. Isso tem duas limitações fatais para a nossa Copa: é **estático** (congelou na data do treino — ele não sabe o placar de ontem) e **alucina** em fatos específicos (ele foi treinado pra ser **plausível**, não **exato**; quando não sabe, inventa com confiança). Pergunte 'quantos ingressos VIP sobraram para a final?' e o conhecimento paramétrico é a **pior** fonte possível: o número muda a cada compra.
+>
+> **RAG — Retrieval-Augmented Generation — resolve invertendo a ordem.** Em vez de 'gerar direto do que decorei', o sistema primeiro **recupera** um fato de uma fonte externa e **injeta esse fato no contexto** do modelo; só então o modelo gera a resposta, agora **fundamentada** naquele fato. A própria sigla é o roteiro: *Retrieval* (recuperar) · *Augmented* (aumentado) · *Generation* (geração). A analogia: é a diferença entre responder **de cabeça** e responder **depois de consultar a ficha na sua frente**. O conhecimento do modelo continua útil para **conversar** (entender a pergunta, redigir bem); mas o **fato** vem de fora.
+>
+> O princípio 'recuperar antes de gerar' é **universal** — o que muda é **como** você recupera (os dois sabores vêm no próximo slide). Aqui o mecanismo de recuperação é o **function calling**: o Gemini não busca o fato sozinho, ele **pede** uma ferramenta (o loop completo eu abro no clímax do F5, slide 11). O que importa agora: a resposta que a turma vê no chatbot **não saiu da memória do modelo** — saiu de um `SELECT` no SQL real, embrulhado em linguagem natural pelo Gemini."
+
 **Gancho:** "Mas cuidado com a palavra RAG — ela costuma significar 'banco vetorial'. Aqui é diferente, e é importante nomear certo."
 
 ## Slide 9 — "RAG aqui NÃO é vector store" · ≈ Storyboard S5 (destaque honesto) [~4 min]
@@ -137,6 +151,13 @@
 
 **O ponto (honestidade arquitetural):**
 > "O **padrão** é o mesmo — *recuperar antes de gerar*. A **implementação** é **grounding via MCP**, não vetores. Chamem pelo nome certo: é **RAG por function-calling**. Isso importa porque um aluno que sai daqui achando que 'fez um vector store' vai procurar embeddings que não existem no código."
+
+**Aprofundamento teórico (os dois sabores de RAG — e por que o nosso):**
+> "Existem **dois jeitos** de fazer a etapa de 'recuperar'. O **RAG clássico** usa **embeddings + banco vetorial**: você transforma textos em **vetores numéricos** (embeddings) que capturam **significado**, guarda num banco vetorial e, na hora da pergunta, busca os vetores **mais parecidos** — **busca por similaridade semântica**. É o jeito certo para **conhecimento não-estruturado**: um manual, uma base de artigos, PDFs — onde a tarefa é 'me traga os trechos mais relevantes sobre X'.
+>
+> O **nosso** RAG é o **grounding por tool-use**: o modelo chama uma **ferramenta MCP** que faz um **`SELECT` parametrizado** no banco. Não há vetor, não há similaridade — há uma **consulta exata**. E isso é uma **escolha deliberada, não preguiça**: os nossos dados são **estruturados e transacionais** — preço de ingresso, disponibilidade, status de um bilhete, tabela de um grupo. Para esse tipo de dado, 'o mais parecido' é **a resposta errada**: você não quer o preço *aproximadamente* parecido, quer **o preço exato daquela categoria, naquela partida, agora**. Busca semântica devolveria 'algo próximo'; um `SELECT` devolve 'o dado, exato e vivo'.
+>
+> A regra prática pra levar pra casa: **dado não-estruturado (texto) → embeddings/vector store; dado estruturado/transacional (banco) → tool-use/`SELECT`.** Os dois são RAG — 'recuperar antes de gerar' — mas confundir os sabores leva o aluno a caçar um banco vetorial que **não existe** no nosso código, ou a tentar responder 'quantos ingressos sobraram' com similaridade, que é a ferramenta errada para a pergunta."
 
 **Gancho → conceito-chave:** "Agora o conceito que amarra o F5 inteiro — e o motivo de tudo isso ser **seguro**."
 
@@ -189,6 +210,13 @@
 
 **Ponto a reforçar:** a "mão" de ação (uma antiga ferramenta de criar alerta, do desenho original) **foi removida** — o McpServer é só **sentidos**. Você **não precisa** explicar filas, webhooks ou roteamento para provar a segurança: **basta olhar a lista de ferramentas**.
 
+**Aprofundamento teórico (como o chatbot funciona por baixo — o loop de function calling):**
+> "Vale abrir a 'caixa preta' do chatbot, porque é isso que torna a regra de ouro **inevitável**. O ciclo tem **quatro tempos**. **(1)** O front manda ao Gemini a **pergunta do usuário** mais o **catálogo de ferramentas** (o que veio do `tools/list` — as 7 tools com seus schemas). **(2)** O Gemini, em **function calling `AUTO`**, **não responde texto** — ele responde uma **intenção de chamada**: 'quero chamar `consultar_partidas` com time=Brasil'. Repare: o modelo **não executa nada**, ele **pede**. **(3)** Quem **executa** é a **nossa aplicação** — o pedido vai pelo gateway → McpServer → `SELECT` no SQL — e o resultado real volta. **(4)** O front devolve esse resultado ao Gemini, que só então **gera a resposta final** em português, fundamentada no dado. É um **loop**: pergunta → o modelo pede uma ferramenta → o app executa → o resultado volta → o modelo responde (e poderia pedir outra ferramenta, e o ciclo repete).
+>
+> A analogia: o Gemini é um **cérebro sem mãos**. Ele é ótimo em decidir *qual* ferramenta usar e *como* interpretar o resultado — mas **braço quem tem é a aplicação**. O modelo nunca toca o banco; ele emite um **pedido tipado** que o **nosso código** decide honrar. (E, no caminho, a `GEMINI_API_KEY` vive no **proxy server-side**: o front fala com o gateway, o McpServer injeta a chave; o browser nunca a vê.)
+>
+> **Agora amarre com a regra de ouro:** olhem o **passo 2**. O modelo só pode **pedir** uma ferramenta que **exista no catálogo** — e o catálogo tem **7 verbos, todos de leitura**. Então, por mais que o usuário peça 'cria um alerta', o loop **não tem uma ação de escrita para o modelo pedir**: o passo 2 não consegue nem **formular** a intenção de escrever. Não é um `IF` que bloqueia; é a **ausência da ferramenta** que torna a escrita impossível. É por isso que 'segurança por construção' não é slogan — é uma **propriedade do loop**."
+
 **Pergunta para fechar o momento:** "Qual é a auditoria de segurança mais simples que existe aqui?" → **Ler o `tools/list`.** Sete verbos, todos de leitura. Fim.
 
 **Erro comum (tabela do guia):** aluno vê o LLM "prometer" a ação e conclui que houve escrita. **Corrija na hora:** peça para checar o banco / o `tools/list`. **Texto não é tool call.**
@@ -224,26 +252,40 @@
 **O ponto que mais trava no hands-on (antecipe já):**
 > "Guardem o **fail-visível**: se vocês esquecerem de conceder `Log Analytics Reader` à Managed Identity, não dá erro barulhento — os **nós simplesmente não acendem** e você toma **403** no `LogsQueryClient`. É o erro nº1 do F6."
 
-**Gancho:** "E essa mesma ideia — uma Managed Identity com uma role *Reader* lendo um recurso gerenciado, **sem segredo** — é exatamente o que vai **tirar as chaves do claro**: o Key Vault."
+**Aprofundamento teórico (o que é Managed Identity de verdade):**
+> "Toda vez que um serviço precisa falar com outro no Azure — ler telemetria, abrir o cofre, conectar no banco — ele precisa **provar quem é**. O jeito antigo é uma **credencial no código/config**: connection string, chave, segredo. O problema é estrutural: esse segredo **existe** — logo pode **vazar** (no git, num log, num screenshot), precisa ser **rotacionado**, e alguém tem que **guardá-lo** com segurança (o 'problema do primeiro segredo': para proteger um segredo, você precisa de outro segredo…).
+>
+> **Managed Identity vira o jogo: o serviço deixa de *ter* um segredo e passa a *ser* uma identidade.** A plataforma cria, no **Entra ID** (o Azure AD), uma identidade **gerenciada por ela** e a **cola** no seu recurso. Em runtime, o código pede um token a um **endpoint de metadados interno da plataforma** (o IMDS) — um endereço que só responde de **dentro** daquela instância — e recebe um **token OAuth2** de curta duração, **sem nenhum segredo no código**. Emissão, validade, rotação: tudo é a plataforma. A analogia: em vez de carregar uma **chave** que qualquer um que a copie usa, você tem um **crachá** que o prédio reconhece como *você* — e não adianta fotografar.
+>
+> O que a identidade **pode fazer** é o **RBAC** (papéis). A identidade em si não dá acesso a nada; você **concede um papel** com o **menor privilégio**: `Log Analytics Reader` para **ler telemetria** (F6), `Key Vault Secrets User` para **ler o cofre** (Blindar). E há **duas variedades**: **system-assigned** (nasce e morre **com** o recurso — some se você apaga o app) e **user-assigned** (um recurso **independente**, que **sobrevive** e pode ser **compartilhado** por vários apps). A aula usa **as duas de propósito** (ADE-010): a **user-assigned compartilhada** lê o Key Vault (um único grant que sobrevive à recriação manual do McpServer/FlowEvents) e a **system-assigned por-app** fala com o SQL, onde cada serviço precisa do **seu** privilégio mínimo. **O 'aha' didático:** é a **mesma mecânica de identidade sem-senha** para telemetria **E** para segredos — aprende-se uma vez, aplica-se nos dois (é a 'irmandade' das MIs que fecho no próximo slide)."
 
-## Slide 14 — "Key Vault: os segredos saem do claro (missão Blindar)" · ≈ Storyboard S8 [~5 min]
+**Reforço Blindar — o cofre (a MESMA identidade lê os segredos):**
+> "O deck junta aqui a outra metade da história (não há mais um slide só de Key Vault — ele vive nesta tecnologia). **A mesma** Managed Identity, com a role `Key Vault Secrets User`, também **lê os segredos do Key Vault**. As chaves — SQL, Gemini, SignalR e o **segredo do gateway** — **saem do claro** das App Settings e vão para o **cofre que já existe** (`kv-dev-tk-cin-001`, nada recriado), **in-place, sem downtime**: o valor não muda, só o **lar**. **Ganho estrutural (não é higiene):** o `X-Gateway-Key` que o gateway **injeta** e o que os serviços **validam** viram **um secret só** → a igualdade fica **estrutural**, não dá mais para divergir por engano e cair com 401. **Frase de efeito:** *'a mesma Managed Identity que lê a telemetria é a que apaga o segredo em claro.'* Honestidade: **SQL sem senha** via MI é o **próximo nível/Fase 2** (backend v1 segue com senha por retro-compat); a **KV reference das chaves é entregue agora**. Base: **ADE-010**."
 
-> **Slide de conceito-chave — agora é ENTREGA, não débito. Afirme o que o aluno FAZ (base: ADE-010).**
+**Gancho:** "Guardem essa ideia — **modernizar sem apagar**. O próximo conceito-chave leva exatamente isso para a **identidade dos usuários**."
+
+## Slide 14 — "CONCEITO-CHAVE · Identidade unificada: modernizar sem destruir" · ≈ Storyboard S8 · Story 3.5 / ADE-007 [~5 min]
+
+> **Slide de conceito-chave — o gêmeo, na Final, do "modernizar sem destruir" das Quartas. É a face ADITIVA de "evoluir sem quebrar" (contraste com o n8n, SUBTRATIVO, slides 17–18). Base: Story 3.5 / ADE-007.**
 
 **Fala:**
-> "Pergunta justa: 'e o Key Vault, não entra?' **Entra — e é entrega da missão Blindar.** **Antes**, as chaves — SQL, Gemini, SignalR e o **segredo do gateway** — viviam **em claro** nas App Settings / secrets do Container App. **Agora** cada uma vira um secret no **Key Vault que já existe** (não recriamos nada), lido por uma **Managed Identity** — uma **User-Assigned compartilhada, só-leitura** do cofre (role `Key Vault Secrets User`). Zero chave em claro na config."
+> "Nas Quartas vocês viram a base v1 (login com senha **bcrypt**) e a chegada do **CIAM**. A Final **fecha o círculo**: o usuário que **já existia no v1** ganha um **`entra_oid` do CIAM** vinculado **na mesma linha `users`** — o `password` bcrypt fica **intacto**, o `entra_oid` é **adicionado** ao lado. É **vínculo, não substituição**: o bcrypt **não migra** (a Microsoft gerencia a credencial do CIAM), então os dois **coexistem** na mesma linha. Modernizar **sem destruir**."
 
-**Enfatize a migração segura:** "É **in-place, sem downtime**: o **valor** do segredo não muda, só sai do App Setting e vai para o cofre. Um recurso por vez, com gate de validação — as Quartas nunca caem."
+**O mecanismo (JIT resolve-or-provision):**
+> "Como isso acontece na prática? Um endpoint novo, **`GET /api/v2/me`**, faz **resolve-or-provision** em três tempos: **(1) resolve por `oid`** (já existe linha? devolve o `id`); **(2) link por email** (não tem por `oid`, mas há um usuário v1 com o **mesmo email**? **vincula** o `entra_oid` naquela linha); **(3) provisiona** (não há nenhum? cria uma linha `users` nova). São **dois caminhos de cobertura**: **eager** — a migração em lote que vocês fizeram nas Quartas — e **lazy** — este JIT, que resolve no **1º login/compra** de quem chega novo pelo CIAM."
 
-**O ganho estrutural (o insight de arquitetura, não só higiene):**
-> "Reparem no `X-Gateway-Key`: o lado que **injeta** (no gateway) e o lado que **valida** (Functions/McpServer) precisavam ter o **mesmo** valor — dois App Settings independentes que podiam **divergir por engano** e derrubar tudo com 401. Centralizando em **um** secret no cofre, referenciado pelos dois lados, a igualdade vira **estrutural**. O cofre não é só higiene — ele **remove uma classe de falha**."
+**O insight de negócio (o 'porquê' que a turma sente):**
+> "Aqui está o que muda para o produto: um cliente **nato-CIAM** — cadastrado direto no External ID, sem nunca ter tido conta v1 — **antes não conseguia comprar**, porque o checkout exigia um `users.id` do v1 que ele não tinha. A unificação o torna **cidadão de primeira classe**: ele compra, e passa a ser visível ao dashboard admin (que lê `users`). O JIT não é enfeite — é o que **destrava a compra** para esse público."
 
-**A frase de efeito (afirmativa — é o que o aluno faz):**
-> "A **mesma** Managed Identity que lê a telemetria é a que **apaga o segredo em claro**."
+**A blindagem (NÃO pule — é segurança):**
+> "Um detalhe crítico: o endpoint é protegido pelo fence **`CiamOnly`**. **Só** um token de **cliente CIAM** aciona o resolve-or-provision — um token de **admin/workforce** (que também carrega um `oid`) é **rejeitado** (403). Sem esse fence, um admin provisionaria/​vincularia uma linha de **cliente** com a identidade do **operador**, corrompendo a base. O admin workforce está **explicitamente fora** do eixo de unificação."
 
-**Honestidade (aponte o rodapé):** "Reuso total — o cofre `kv-dev-tk-cin-001` já existia; nada de novo além da identidade de leitura. **SQL sem senha** (via Managed Identity) é o **próximo nível / showcase** (a Fase 2): o **backend v1 ainda usa senha** por retro-compat, então a senha do SQL vai para o cofre agora e só **deixa de existir** na Fase 2. Mas a **KV reference das chaves é entregue aqui**. Direção fechada na **ADE-010**."
+**A frase de efeito:**
+> "O login novo não apaga o usuário antigo — ele o **adota**."
 
-**Gancho:** "E esse mesmo raciocínio de identidade gerenciada tem uma **irmã**: a MI que lê o **Log Analytics** para a observabilidade. Vamos ao canal que empurra a telemetria para a sua tela: SignalR."
+**A moldura (o contraste com os slides do n8n):** "Este é o lado **ADITIVO** de 'evoluir sem quebrar': a identidade **adiciona** o vínculo, **nada é apagado**. Mais à frente (n8n) vem o lado **SUBTRATIVO**: **remover** uma peça inteira. Aditivo × subtrativo — as duas faces de modernizar destruindo o mínimo."
+
+**Gancho:** "Voltando ao fio da **observação em tempo real**: falta o **canal** que empurra a telemetria para a sua tela — o SignalR."
 
 ## Slide 15 — "TECNOLOGIA 4 DE 4 · Observabilidade ao vivo (SignalR)" · ≈ Storyboard S7 [~6 min]
 
@@ -256,7 +298,14 @@
 > "A mesma telemetria que acende os nós também dá **observabilidade de produção**, de graça, porque reusa o App Insights e o Log Analytics que já estão no ar: **tracing ponta-a-ponta por `correlationId`** (Transaction Search / Application Map), um **Workbook** da jornada da compra (latência por hop, falhas, backlog do Service Bus) e **alertas úteis** — **5xx no gateway** e **dead-letter no Service Bus**."
 
 **A amarração didática (segurança ≙ observabilidade):**
-> "Reparem no padrão: a MI que lê o **Log Analytics** (`Log Analytics Reader`) é **irmã** da MI que lê o **Key Vault** (`Key Vault Secrets User`) do slide anterior. Uma identidade gerenciada com uma role *Reader* lendo um recurso gerenciado, **sem segredo**. É a **mesma disciplina**, contada duas vezes — segurança e observabilidade."
+> "Reparem no padrão: a MI que lê o **Log Analytics** (`Log Analytics Reader`) é **irmã** da MI que lê o **Key Vault** (`Key Vault Secrets User`, que vimos na tecnologia Managed Identity, slide 13). Uma identidade gerenciada com uma role *Reader* lendo um recurso gerenciado, **sem segredo**. É a **mesma disciplina**, contada duas vezes — segurança e observabilidade."
+
+**Aprofundamento teórico (por que SignalR — o problema do tempo real):**
+> "Pensem no que o Flow Visualizer precisa: quando a compra chega no nó 3, a **tela do aluno** tem que acender o nó 3 **naquele instante**. O jeito ingênuo seria o browser **perguntar sem parar** — 'já chegou? já chegou?' — de segundo em segundo. Isso é **polling**, e é ruim por três motivos: **desperdício** (99% das perguntas respondem 'ainda não'), **latência** (o evento pode acontecer logo depois da pergunta e você só vê no ciclo seguinte) e **escala** (cada browser martelando o servidor). O modelo certo é o **inverso**: o **servidor empurra** o evento para o browser **no momento em que acontece**. Isso é **push** — e é o problema que o SignalR resolve.
+>
+> **Azure SignalR é o serviço gerenciado de tempo real** do Azure. Por baixo ele usa **WebSocket** — uma conexão que fica **aberta** nos dois sentidos, ao contrário do HTTP normal (pergunta → resposta → fecha) — e, quando o WebSocket não é possível (rede/proxy no caminho), **degrada sozinho** para outras técnicas de transporte. Os conceitos: uma **conexão** é cada browser ligado; um **Hub** é o ponto lógico onde o servidor 'fala' com os clientes — o nosso chama **`FlowHub`**. Ser **gerenciado** significa que o Azure aguenta o número de conexões e a entrega; você não opera um servidor de WebSocket na unha.
+>
+> Um detalhe que **derruba o lab se errado**: o **Service Mode**. No modo **`Default`**, o **nosso** FlowEvents (.NET, via `AddAzureSignalR`) **hospeda** o `FlowHub` — o SignalR é o 'megafone', mas a **lógica** do Hub roda no nosso serviço. No modo **`Serverless`** não há servidor hospedando o Hub (esse modo é feito para Azure Functions/webhooks), e o nosso FlowEvents **recusaria** a conexão. Por isso: **Default**, nunca Serverless. Fechando o quadro do F6: o FlowEvents **lê os traces** por `correlationId` (Kusto, com a Managed Identity), o `TraceEventMapper` decide **qual nó** cada trace acende, e o **SignalR empurra** o evento para a rota `/flow` — a bolinha acende os 5 nós **ao vivo**, sem o browser perguntar nada. **(É aqui, no lab, que você pausa e mostra a compra atravessando a tela.)**"
 
 **Erros a plantar (colhe no hands-on):** "Dois clássicos: criar o SignalR em **Serverless** (ele recusa por tier — tem de ser **Default**), e esquecer o **origin exato** no CORS (WebSocket com credentials não aceita `*`)."
 
@@ -320,6 +369,8 @@
 
 **Pergunta para a turma:** "Se um aluno procurar o 'nó de notificação' e não achar, o que você responde?" → é o trade-off aceito: **5 nós, notificação inline no Consumer**. Não é bug; é design.
 
+**A moldura de contraste (amarre com o slide de identidade):** "Fechem o par: lá no slide da **identidade unificada**, a evolução foi **ADITIVA** — a gente **adicionou** o vínculo CIAM, nada apagado. Aqui é **SUBTRATIVA** — a gente **removeu** uma peça inteira e a função continua inline. **As duas faces de 'evoluir sem quebrar':** às vezes você soma (identidade), às vezes você some (n8n). Modernizar bem é destruir o mínimo."
+
 **Checkpoint (diga o critério):** "**5 nós exatos**, `correlationId` ponta-a-ponta em **< 30s**; a notificação encontrada **dentro** do nó Function Consumer; **zero** referência a um 6º nó ou a orquestração externa."
 
 **Gancho → fechamento:** "Vamos ver a foto completa — tudo o que vocês montaram, em um diagrama só."
@@ -342,15 +393,16 @@
 > - **Habilitar o workflow:** abrir um **PR `lab-a-final` → `main` no próprio fork** e fazer o merge (é o "exercício" — faz o `lab-a-final.yml` aparecer no Actions). **Nunca** PR no repo da TFTEC.
 > - Rodar os `acao` na ordem: **`mcp-server` → `gateway` → `flow-events` → `frontend`** (ou **`tudo`**).
 
-**Gancho:** "Está tudo no ar. Vamos amarrar o que vocês **provaram** — quatro missões."
+**Gancho:** "Está tudo no ar. Vamos amarrar o que vocês **provaram** — as **cinco** missões."
 
-## Slide 20 — "As 4 missões da Final (retrospectiva)" · ≈ Storyboard S11 (parte) [~7 min]
+## Slide 20 — "As 5 missões da Final (retrospectiva)" · ≈ Storyboard S11 (parte) [~7 min]
 
 **Fala (percorra a tabela, com orgulho):**
 - **Voz (F5):** uma IA consulta dados reais **com segurança** — 7 sentidos, zero escrita; a regra de ouro vale **por construção**.
 - **Visão (F6):** observabilidade distribuída — uma compra animada em **5 nós** por `correlationId`.
 - **Blindar (hardening):** o gateway é o **guardião único** — `X-Gateway-Key` fecha o bypass direto ao McpServer; **os segredos vão para o Key Vault** (lidos por Managed Identity), não em claro; chave Gemini **nunca** no bundle; cache pós-auth.
-- **Simplificar (re-arquitetura):** **menos peças** (notificação inline), mesma função — retro-compat.
+- **Unificar (identidade):** a base **v1 (bcrypt) ↔ CIAM** convive na **mesma linha `users`**; o JIT `/api/v2/me` torna o cliente **nato-CIAM** cidadão de primeira classe (fence `CiamOnly`). É a face **ADITIVA** — nada é apagado.
+- **Simplificar (re-arquitetura):** **menos peças** (notificação inline), mesma função — retro-compat. É a face **SUBTRATIVA** — uma peça inteira some.
 
 **Perguntas de discussão para fechar (as mesmas do guia):**
 - Por que o McpServer tem ingress **interno** e o FlowEvents **externo**?

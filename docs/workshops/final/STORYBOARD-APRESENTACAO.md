@@ -145,6 +145,10 @@ SLIDE 6 — TECNOLOGIA 3 DE 4 · Managed Identity
    - Fail-visível — sem o papel, o LogsQueryClient toma 403 e os nós NUNCA acendem.
 • Caixa "▸ NESTA ETAPA": ligar a Managed Identity do ca-flow (FlowEvents) e conceder
    Log Analytics Reader no workspace.
+• Faixa "🔐 BLINDAR · a MESMA identidade abre o cofre": essa Managed Identity (role Key
+   Vault Secrets User) também LÊ os segredos do Key Vault — as chaves (SQL, Gemini,
+   SignalR, o segredo do gateway) SAEM do claro e vão para o cofre já existente, in-place,
+   sem downtime. Uma identidade sem-senha para telemetria E segredos.
 • Selo: TECNOLOGIA 3 DE 4. Acento roxo. Footer padrão.
 
 ════════════════════════════════════════════════════════════════════════
@@ -175,31 +179,30 @@ SLIDE 7 — TECNOLOGIA 4 DE 4 · Azure SignalR + observabilidade (Flow Visualize
 • Selo: TECNOLOGIA 4 DE 4. Acento roxo. Footer padrão.
 
 ════════════════════════════════════════════════════════════════════════
-SLIDE 8 — CONCEITO-CHAVE · Key Vault: os segredos saem do claro (missão Blindar)
+SLIDE 8 — CONCEITO-CHAVE · Identidade unificada: modernizar sem destruir
 ════════════════════════════════════════════════════════════════════════
 • Rótulo: CONCEITO-CHAVE
-• Título: Os segredos em claro vão para o Key Vault — lidos por Managed Identity
-• Corpo (contraste ANTES → AGORA, é o que o aluno ENTREGA):
-   - ANTES: as chaves (SQL, Gemini, SignalR e o segredo do gateway) viviam EM CLARO nas
-      App Settings / secrets do Container App.
-   - AGORA (entrega da missão Blindar): cada chave vira um secret no Key Vault que JÁ
-      EXISTE (nada recriado), e os apps a leem por uma Managed Identity — uma
-      User-Assigned COMPARTILHADA, só-leitura do cofre (role Key Vault Secrets User).
-      Zero chave em claro na config. Migração in-place, sem downtime (o valor não muda,
-      só sai do App Setting para o cofre).
-• Mini-visual (seta): [App Settings em claro] —migra in-place→ [Key Vault (existente)]
-   ←lê via Managed Identity (User-Assigned · Secrets User)— [gateway · McpServer ·
-   FlowEvents · Functions]
-• GANHO ESTRUTURAL (destaque — não é só higiene): o segredo do gateway vira UM só no
-   cofre; o lado que INJETA o X-Gateway-Key e o lado que VALIDA (Functions/McpServer)
-   referenciam o MESMO secret → a igualdade vira ESTRUTURAL. Não dá mais para divergir
-   por engano e derrubar tudo com 401.
-• FRASE DE EFEITO (grande, entre aspas — afirmativo, é o que o aluno FAZ):
-   "A mesma Managed Identity que lê a telemetria é a que apaga o segredo em claro."
-• Honestidade (linha pequena): SQL SEM SENHA (via Managed Identity) é o "próximo nível"
-   / showcase (a Fase 2) — o backend v1 segue com senha por retro-compat; mas a KV
-   reference das chaves É entregue agora. Direção fechada na ADE-010.
-• Acento roxo/vermelho. Footer padrão.
+• Título: Identidade unificada — o login novo ADOTA o usuário antigo
+• Corpo (o vínculo, não a substituição):
+   - O usuário que já existia no v1 (senha bcrypt) ganha um entra_oid do CIAM vinculado
+      NA MESMA LINHA users — VÍNCULO, não substituição. O bcrypt NÃO migra (a Microsoft
+      gerencia a credencial do CIAM); os dois COEXISTEM na mesma linha.
+   - O JIT /api/v2/me faz resolve-or-provision: EAGER (a migração em lote das Quartas) +
+      LAZY (link por EMAIL no 1º login/compra de quem chega nato-CIAM).
+   - O fence CiamOnly blinda o endpoint: um token admin/workforce NUNCA provisiona um
+      cliente (segurança da unificação).
+• Mini-visual (uma linha users, duas credenciais):
+   [users.id] ── password: bcrypt (v1, INTACTO) ── + ── entra_oid: <guid CIAM> (adicionado)
+   → resultado: COEXISTE (o mesmo humano, uma linha)
+• INSIGHT DE NEGÓCIO (destaque): o usuário nato-CIAM ANTES não conseguia comprar (o
+   checkout exigia um users.id do v1). A unificação o torna CIDADÃO DE PRIMEIRA CLASSE
+   na base (visível ao dashboard admin, que lê users).
+• FRASE DE EFEITO (grande, entre aspas):
+   "O login novo não apaga o usuário antigo — ele o ADOTA."
+• Moldura (linha pequena): é o gêmeo, na Final, do "modernizar sem destruir" das Quartas.
+   Este slide é ADITIVO (adiciona o vínculo, nada é apagado) — contraste explícito com o
+   Slide 9 (n8n), que é SUBTRATIVO. Story 3.5 / ADE-007 (fence CiamOnly, bcrypt+entra_oid).
+• Acento teal/roxo. Footer padrão.
 
 ════════════════════════════════════════════════════════════════════════
 SLIDE 9 — CONCEITO-CHAVE · Onde foi o n8n? (simplificar > substituir)
@@ -219,6 +222,10 @@ SLIDE 9 — CONCEITO-CHAVE · Onde foi o n8n? (simplificar > substituir)
 • Trade-off honesto (linha pequena): a notificação fica INVISÍVEL na animação (dobrada
    no nó 3); a observabilidade dela vive no log correlacionado. Ganhamos simplicidade —
    menos peças, menos falhas, menos custo. Cinco nós, não seis.
+• Moldura de contraste (destaque): DUAS FACES de "evoluir sem quebrar" — o Slide 8
+   (identidade) é ADITIVO (adiciona o vínculo CIAM, nada é apagado); este slide é
+   SUBTRATIVO (remove uma peça inteira, a função continua inline). Às vezes soma, às
+   vezes some.
 • ⚠ Regra de linguagem para quem gera/apresenta: NUNCA escrever "automação no-code" nem
    citar orquestração externa como algo PRESENTE — na Final ela não existe.
 • Acento teal/roxo. Footer padrão.
@@ -252,7 +259,7 @@ SLIDE 11 — ENCERRAMENTO DA JORNADA
 ════════════════════════════════════════════════════════════════════════
 • Rótulo: ENCERRAMENTO DA JORNADA
 • Título: Você concluiu a Copa do Mundo Azure
-• Quatro bullets (o que foi construído — cada um com um ícone/acento):
+• Cinco bullets (o que foi construído — cada um com um ícone/acento):
    • VOZ (F5) — um chatbot MCP + RAG que consulta o estado real da Copa: 7 sentidos,
       zero escrita, segurança por construção.
    • VISÃO (F6) — observabilidade ao vivo: uma compra animada em 5 nós por correlationId
@@ -260,8 +267,10 @@ SLIDE 11 — ENCERRAMENTO DA JORNADA
    • BLINDAR — o gateway é o guardião único (X-Gateway-Key fecha o bypass ao McpServer);
       os segredos vão para o Key Vault, lidos por Managed Identity, não em claro; a chave
       do Gemini nunca vai no bundle.
+   • UNIFICAR — base v1 (bcrypt) ↔ CIAM na mesma linha users; o JIT /api/v2/me torna o
+      cliente nato-CIAM cidadão de primeira classe (ADITIVO — nada é apagado).
    • SIMPLIFICAR — menos peças (notificação inline, n8n removido), mesma função,
-      retro-compatível com as fases anteriores.
+      retro-compatível com as fases anteriores (SUBTRATIVO).
 • Fala de fechamento (uma frase, destaque): "Você começou com uma compra de ingresso e
    terminou com um sistema Azure-native completo — construído do zero, com as próprias
    mãos. Isso é uma Grande Final."
@@ -277,7 +286,9 @@ LEMBRETES FINAIS PARA A GERAÇÃO
 • Slide 10 é a arquitetura (diagrama + legenda numerada); slide 11 é o encerramento
    celebrativo da jornada INTEIRA (não só da fase).
 • NÃO invente tools, nós ou números: são 7 tools read-only, 5 nós, notificação inline,
-   n8n removido, gemini-2.5-flash, chave Gemini no proxy, X-Gateway-Key.
+   n8n removido, gemini-2.5-flash, chave Gemini no proxy, X-Gateway-Key. E, na identidade
+   (Slide 8): bcrypt + entra_oid na MESMA linha users, JIT GET /api/v2/me
+   (resolve-or-provision), fence CiamOnly — não invente rotas/claims além destes.
 
 ═══ FIM DO PROMPT ═══
 ```
@@ -300,8 +311,8 @@ LEMBRETES FINAIS PARA A GERAÇÃO
   | 5 | Tec 2: Entra External ID | Tec 2: **RAG por tool-use** |
   | 6 | Tec 3: Entra ID workforce | Tec 3: **Managed Identity** |
   | 7 | Tec 4: Azure Container Apps | Tec 4: **Azure SignalR / observabilidade** |
-  | 8 | Conceito: "só muda a string da authority" | Conceito: **Key Vault — segredos saem do claro (missão Blindar)** |
-  | 9 | Conceito: "modernizar sem destruir" | Conceito: **"Onde foi o n8n?" (simplificar > substituir)** |
+  | 8 | Conceito: "só muda a string da authority" | Conceito: **Identidade unificada — "modernizar sem destruir" (ADITIVO)** — gêmeo do slide de identidade das Quartas |
+  | 9 | Conceito: "modernizar sem destruir" | Conceito: **"Onde foi o n8n?" (simplificar > substituir, SUBTRATIVO)** |
   | 10 | Arquitetura "a foto completa da F2" | Arquitetura "a foto completa da Final" |
   | 11 | Encerramento "você concluiu as Quartas" | Encerramento "você concluiu a Copa do Mundo Azure" |
 
@@ -310,5 +321,6 @@ LEMBRETES FINAIS PARA A GERAÇÃO
   slide equivalente deste `.pptx` (`≈ Storyboard SN`).
 - **Rastreabilidade (Art. IV):** fontes — ADE-008 (re-arquitetura sem n8n), ADE-009 (X-Gateway-Key),
   **ADE-010 (MI + Key Vault sobre os recursos existentes + observabilidade nível-produção)**,
-  `docs/runbooks/final-portal-guide.md`, código real (`FifaTicketTools.cs`, `gemini.ts`,
-  `FlowEventType.cs` / `flowNodes.ts`).
+  **Story 3.5 + ADE-007 (identidade unificada base v1 ↔ CIAM: bcrypt+entra_oid, JIT `/api/v2/me`,
+  fence `CiamOnly`)**, `docs/runbooks/final-portal-guide.md`, código real (`FifaTicketTools.cs`,
+  `gemini.ts`, `FlowEventType.cs` / `flowNodes.ts`).
